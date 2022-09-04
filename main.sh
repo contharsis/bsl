@@ -1,9 +1,12 @@
 #!/bin/bash
 
+declare terminal_output=$(tty)
+
+# Choice
+# bsl ch <file full path> <default choice>
 ch() {
 	declare file="$(echo "$1" | sed -n "s/.*\///p" | sed -n "s/.*/\U&/p")"
 	declare default_choice="$2"
-	declare result="$3"
 
 	declare user_choice=''
 
@@ -19,9 +22,11 @@ ch() {
 		fi
 	done
 
-	eval $result="'$user_choice'"
+	echo "$user_choice"
 }
 
+# File check
+# bsl fch <file path> <type> <default choice>
 fch() {
 	declare file="$1"
 	declare filename="$(echo "$1" | sed -n "s/.*\///p")"
@@ -29,20 +34,20 @@ fch() {
 	declare default_choice="$3"
 
 	declare choice=''
-	declare create_file=''
+	declare create_file='n'
 
 	if [ "$type" = 'f' ]; then
 		if [ -f "$file" ]; then
-			echo "WARNING: Found $filename with content:"
-			echo "------- START -------"
+			echo "WARNING: Found $filename with content:" > "$terminal_output"
+			echo "------- START -------" > "$terminal_output"
 			cat "$file"
-			echo "-------  END  -------"
+			echo "-------  END  -------" > "$terminal_output"
 
-			ch "$file" "$default_choice" choice
+			choice=$(ch "$file" "$default_choice")
 
 			if [ "$choice" = 'y' ]; then
 				rm "$file"
-				echo "Deleted $filename at $file"
+				echo "Deleted $filename at $file" > "$terminal_output"
 				create_file='y'
 			fi
 		else
@@ -51,34 +56,81 @@ fch() {
 
 		if [ "$create_file" = 'y' ]; then
 			touch "$file"
-			echo "Created $filename at $file"
+			echo "Created $filename at $file" > "$terminal_output"
 		fi
 	fi
 
 	if [ "$type" = 'd' ]; then
 		if [ ! -d "$file" ]; then
 			mkdir -p "$file"
-			echo "Created filepath at $file"
+			echo "Created filepath at $file" > "$terminal_output"
 		fi
 	fi
 }
 
-
-# WIP
+# Invalid file check
+# bsl ifch <array of files> <array of file types> <init command> <current command>
 ifch() {
-	declare init_command="$1"
+	declare -a files=($1)
+	declare -a file_types=($2)
+	declare init_command="$3"
+	declare current_command="$4"
+
 	declare missing_file='n'
+	declare -i counter=0
 
-	shift 1
-	for arg in "$@"
-	do
-		if [ ! -f "$arg" ]; then
-			missing_file='y'
-			break
+	if [ "$current_command" = "$init_command" ]; then
+		echo "$missing_file"
+		return 0
+	fi
+	
+	for file in "${files[@]}"; do
+		if [ "${file_types[$counter]}" = 'f' ]; then
+			if [ ! -f "$file" ]; then
+				missing_file='y'
+				break
+			fi
 		fi
-	done
 
-	echo "Some config files don't exist, use $init_command to create them"
+		if [ "${file_types[$counter]}" = 'd' ]; then
+			if [ ! -d "$file" ]; then
+				missing_file='y'
+				break
+			fi
+		fi
+
+		counter=$(( counter + 1 ))
+	done
+	
+	if [ "$missing_file" = 'y' ]; then
+		echo "Some config files don't exist, use '$init_command' to create them"  > "$terminal_output"
+	fi
+	
+	echo "$missing_file"
+}
+
+# Find string
+# bsl fstr <array of strings> <string>
+fstr() {
+	declare -a strings=($1)
+	declare  searched_string="$2"
+
+	declare found_string='n'
+	
+	if [[ " ${strings[*]} " =~ " $searched_string " ]]; then
+        	found_string='y'
+	fi
+
+	echo "$found_string"
+}
+
+# Command not found message
+# bsl cmdnfm <command> <help command>
+cmdnfm() {
+	declare command="$1"
+	declare help_command="$2"
+
+	echo "ERROR: Command '$command' not found, use '$help_command' to list commands" > "$terminal_output"
 }
 
 "$@"
