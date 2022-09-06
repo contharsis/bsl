@@ -1,10 +1,14 @@
 #!/bin/bash
 
-declare terminal_output=$(tty)
+if [ "$bsl_imported" = 'y' ]; then
+	return 0
+fi
+
+declare bsl_terminal_output=$(tty)
 
 # Choice
-# bsl ch <file full path> <default choice>
-ch() {
+# bsl_ch <file full path> <default choice>
+bsl_ch() {
 	declare file="$(echo "$1" | sed -n "s/.*\///p" | sed -n "s/.*/\U&/p")"
 	declare default_choice="$2"
 
@@ -26,8 +30,8 @@ ch() {
 }
 
 # File check
-# bsl fch <file path> <type> <default choice>
-fch() {
+# bsl_fch <file path> <type> <default choice>
+bsl_fch() {
 	declare file="$1"
 	declare filename="$(echo "$1" | sed -n "s/.*\///p")"
 	declare type="$2"
@@ -38,16 +42,16 @@ fch() {
 
 	if [ "$type" = 'f' ]; then
 		if [ -f "$file" ]; then
-			echo "WARNING: Found $filename with content:" > "$terminal_output"
-			echo "------- START -------" > "$terminal_output"
+			echo "WARNING: Found $filename with content:" > "$bsl_terminal_output"
+			echo "------- START -------" > "$bsl_terminal_output"
 			cat "$file"
-			echo "-------  END  -------" > "$terminal_output"
+			echo "-------  END  -------" > "$bsl_terminal_output"
 
-			choice=$(ch "$file" "$default_choice")
+			choice=$(bsl_ch "$file" "$default_choice")
 
 			if [ "$choice" = 'y' ]; then
 				rm "$file"
-				echo "Deleted $filename at $file" > "$terminal_output"
+				echo "Deleted $filename file at $file" > "$bsl_terminal_output"
 				create_file='y'
 			fi
 		else
@@ -56,21 +60,21 @@ fch() {
 
 		if [ "$create_file" = 'y' ]; then
 			touch "$file"
-			echo "Created $filename at $file" > "$terminal_output"
+			echo "Created $filename file at $file" > "$bsl_terminal_output"
 		fi
 	fi
 
 	if [ "$type" = 'd' ]; then
 		if [ ! -d "$file" ]; then
 			mkdir -p "$file"
-			echo "Created filepath at $file" > "$terminal_output"
+			echo "Created directory path at $file" > "$bsl_terminal_output"
 		fi
 	fi
 }
 
 # Invalid file check
-# bsl ifch <array of files> <array of file types> <init command> <current command>
-ifch() {
+# bsl_ifch <array of files> <array of file types> <init command> <current command>
+bsl_ifch() {
 	declare -a files=($1)
 	declare -a file_types=($2)
 	declare init_command="$3"
@@ -81,7 +85,7 @@ ifch() {
 
 	if [ "$current_command" = "$init_command" ]; then
 		echo "$missing_file"
-		return 0
+		return 1
 	fi
 	
 	for file in "${files[@]}"; do
@@ -103,15 +107,15 @@ ifch() {
 	done
 	
 	if [ "$missing_file" = 'y' ]; then
-		echo "Some config files don't exist, use '$init_command' to create them"  > "$terminal_output"
+		echo "Some config files don't exist, use '$init_command' to create them"  > "$bsl_terminal_output"
 	fi
 	
 	echo "$missing_file"
 }
 
 # Find string
-# bsl fstr <array of strings> <string>
-fstr() {
+# bsl_fstr <array of strings> <string>
+bsl_fstr() {
 	declare -a strings=($1)
 	declare  searched_string="$2"
 
@@ -125,12 +129,12 @@ fstr() {
 }
 
 # Command not found message
-# bsl cmdnfm <command> <help command>
-cmdnfm() {
+# bsl_cmdnfm <command> <help command>
+bsl_cmdnfm() {
 	declare command="$1"
 	declare help_command="$2"
 
-	echo "ERROR: Command '$command' not found, use '$help_command' to list commands" > "$terminal_output"
+	echo "ERROR: Command '$command' not found, use '$help_command' to list commands" > "$bsl_terminal_output"
 }
 
-"$@"
+declare bsl_imported='y'
