@@ -4,32 +4,61 @@ if [ "$bsl_imported" = 'y' ]; then
 	return 0
 fi
 
-declare bsl_terminal_output=$(tty)
+declare bsl_terminal_output="$(tty)"
 
-# Choice
-# bsl_ch <file full path> <default choice>
-bsl_ch() {
-	declare file="$(echo "$1" | sed -n "s/.*\///p" | sed -n "s/.*/\U&/p")"
-	declare default_choice="$2"
+# output to terminal
+# bsl_o <text>
+bsl_o() {
+	if [ "$2" = "space" ]; then
+		echo > "$bsl_terminal_output"
+	fi
 
-	declare user_choice=''
+	echo "$1" > "$bsl_terminal_output"
 
-	while true; do
-		read -p "Proceed with overwriting it? (DELETES CURRENT $file PERMANENTLY) (y/n, default is $default_choice): " user_choice
-
-		if [ "$user_choice" = '' ]; then
-			user_choice="$default_choice"
-		fi
-
-		if [ "$user_choice" = 'y' ] || [ "$user_choice" = 'n' ]; then
-			break
-		fi
-	done
-
-	echo "$user_choice"
+	if [ "$2" = "space" ]; then
+		echo > "$bsl_terminal_output"
+	fi
 }
 
-# File check
+# get file name from file path
+# bsl_gfn <reference> <full file path>
+bsl_gfn() {
+	declare -n reference="$1"
+	
+	reference="$(echo "$2" | sed "s/.*\///")"
+}
+
+# choice - user chooses whether to overwrite the current existing file with empty one
+# bsl_ch <reference> <full file path> <default choice>
+bsl_ch() {
+	declare -n reference="$1"
+	
+	declare file_name=''
+	bsl_gfn file_name "$2"
+
+	declare default_choice="$3"
+	declare choice=''
+
+	while true; do
+		read -p "Proceed with overwriting it? (DELETES CURRENT $file_name PERMANENTLY) [Y/n]: " choice
+
+		if [ "$choice" = '' ]; then
+			choice="$default_choice"
+		fi
+
+		if [ "$choice" = 'y' ] || [ "$choice" = 'n' ]; then
+			break
+		fi
+
+		bsl_o "Invalid option, pick either yes or no" "space"
+	done
+
+	reference="$choice"
+}
+
+# !!!!!!!!!!!!!!!!!!!!!!! UNTIll HERE !!!!!!!!!!!!!!!!!!!!!!!
+
+# file check - check whether 
 # bsl_fch <file path> <type> <default choice>
 bsl_fch() {
 	declare file="$1"
