@@ -1,13 +1,14 @@
 #!/bin/bash
 
-if [ "$bsl_imported" = 'y' ]; then
+if [ "$bsl_imported" = "y" ]; then
 	return 0
 fi
 
 declare bsl_terminal_output="$(tty)"
 
 # output to terminal
-# bsl_o <text>
+# FIX ADD PARAMETERS THAT CAN BE AT ANY PLACE
+# bsl_o <text> <parameters>
 bsl_o() {
 	if [ "$2" = "space" ]; then
 		echo > "$bsl_terminal_output"
@@ -33,20 +34,20 @@ bsl_gfn() {
 bsl_ch() {
 	declare -n reference="$1"
 	
-	declare file_name=''
+	declare file_name=""
 	bsl_gfn file_name "$2"
 
 	declare default_choice="$3"
-	declare choice=''
+	declare choice=""
 
 	while true; do
 		read -p "Proceed with overwriting it? (DELETES CURRENT $file_name PERMANENTLY) [Y/n]: " choice
 
-		if [ "$choice" = '' ]; then
+		if [ "$choice" = "" ]; then
 			choice="$default_choice"
 		fi
 
-		if [ "$choice" = 'y' ] || [ "$choice" = 'n' ]; then
+		if [ "$choice" = "y" ] || [ "$choice" = "n" ]; then
 			break
 		fi
 
@@ -56,25 +57,24 @@ bsl_ch() {
 	reference="$choice"
 }
 
-# !!!!!!!!!!!!!!!!!!!!!!! UNTIll HERE !!!!!!!!!!!!!!!!!!!!!!!
-
-# file check - check whether 
-# bsl_fch <file path> <type> <default choice>
+# file check - check whether the file exists
+# bsl_fch <file path> <file type> <default choice>
 bsl_fch() {
-	declare file="$1"
-	declare filename="$(echo "$1" | sed -n "s/.*\///p")"
-	declare type="$2"
+	declare file_path="$1"
+	declare file_name=""
+	bsl_gfn file_name "$file_path"
+	declare file_type="$2"
 	declare default_choice="$3"
 
-	declare choice=''
-	declare create_file='n'
+	declare choice=""
+	declare create_file="n"
 
-	if [ "$type" = 'f' ]; then
+	if [ "$type" = "f" ]; then
 		if [ -f "$file" ]; then
-			echo "WARNING: Found $filename with content:" > "$bsl_terminal_output"
-			echo "------- START -------" > "$bsl_terminal_output"
-			cat "$file"
-			echo "-------  END  -------" > "$bsl_terminal_output"
+			bsl_o "WARNING: Found $file_name with content:"
+			bsl_o "------- START -------" >
+			bsl_o "$file" "file"
+			bsl_o "-------  END  -------"
 
 			choice=$(bsl_ch "$file" "$default_choice")
 
